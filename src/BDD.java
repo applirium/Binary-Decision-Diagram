@@ -5,7 +5,7 @@ public class BDD {
 
     BDD(String bfunction,String order)
     {
-        this.numberOfNodes = 1;
+        this.numberOfNodes = 0;
         this.numberOfVariables = order.length();
         this.root = new Node(bfunction);
     }
