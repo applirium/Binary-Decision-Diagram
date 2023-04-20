@@ -6,9 +6,9 @@ public class Node {
 
     Node(String bfuction)
     {
+        this.bfuction = bfuction;
         this.leftchild = null;
         this.rightchild = null;
-        this.bfuction = bfuction;
     }
 
     public Node getLeftchild() {

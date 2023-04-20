@@ -3,49 +3,48 @@ import java.util.*;
 public class Test {
 
     public static void main(String[] args) {
-        int limit = 3;
-        String order = orderGen(limit);
-        String bfunction = bfunctionGen(limit);
+        int limit = 10;
+        Test test = new Test();
 
-        BDD robdd = create(bfunction,order);
+        String order = test.orderGen(limit);
+        String bfunction = test.bfunctionGen(limit);
+        BDD robdd = test.create(bfunction,order);
         System.out.println(1);
     }
 
-    public static BDD create(String bfunction, String order)
+    public BDD create(String bfunction, String order)
     {
         BDD root = new BDD(bfunction,order);
         root.setRoot(nodeRecursion(root.getRoot(),root,order,0));
         return root;
     }
-    public static Node nodeRecursion(Node root,BDD diagram,String order,int i)
-    {
+    public Node nodeRecursion(Node root,BDD diagram,String order,int i){
         Node newNode;
         diagram.setNumberOfNodes(diagram.getNumberOfNodes() + 1);
 
         if(root.getLeftchild() == null && !(root.getBfuction().equals("0") || root.getBfuction().equals("1")) && i < order.length())
         {
-            newNode = new Node(decomposition(root.getBfuction(),order.substring(i,i+1),'N'));
+            newNode = new Node(booleanSimplifing(decomposition(root.getBfuction(),order.substring(i,i+1),'N')));
             root.setLeftchild(nodeRecursion(newNode,diagram,order,i+1));
         }
 
         if(root.getRightchild() == null && !(root.getBfuction().equals("0") || root.getBfuction().equals("1")) && i < order.length())
         {
-            newNode = new Node(decomposition(root.getBfuction(),order.substring(i,i+1),'P'));
+            newNode = new Node(booleanSimplifing(decomposition(root.getBfuction(),order.substring(i,i+1),'P')));
             root.setRightchild(nodeRecursion(newNode,diagram,order,i+1));
         }
         return root;
     }
 
-    public static BDD createWithBestOrder(String bfunction)
+    public BDD createWithBestOrder(String bfunction)
     {
         return null;
     }
-    public static char use(BDD bdd,String input)
+    public char use(BDD bdd,String input)
     {
         return 0;
     }
-
-    public static String decomposition(String bfunction, String order,char choice) {
+    public String decomposition(String bfunction, String order,char choice) {
         ArrayList<String> functionList = new ArrayList<>(Arrays.asList(bfunction.split("[+]",0)));
         ArrayList<String> finalList = new ArrayList<>(functionList);
 
@@ -54,33 +53,37 @@ public class Test {
             switch (choice) {
                 case 'N' -> {
                     if (bool.contains("!" + order))
+                    {
                         finalList.set(finalList.indexOf(bool), bool.replace("!" + order, ""));
-
+                        if (bool.replace("!" + order, "").equals(""))
+                            return "1";
+                    }
                     else if (bool.contains(order))
+                    {
                         finalList.remove(bool);
-
-                    finalList.remove("");
-
-                    if (finalList.isEmpty())
-                        return "0";
-
+                        if (finalList.isEmpty())
+                            return "0";
+                    }
                 }
                 case 'P' -> {
                     if (bool.contains("!" + order))
+                    {
                         finalList.remove(bool);
-
+                        if (finalList.isEmpty())
+                            return "0";
+                    }
                     else if (bool.contains(order))
+                    {
                         finalList.set(finalList.indexOf(bool), bool.replace(order, ""));
-
-                    if (finalList.contains(""))
-                        return "1";
+                        if (bool.replace(order, "").equals(""))
+                            return "1";
+                    }
                 }
             }
         }
-
         return booleanSimplifing(String.join("+",finalList));
     }
-    public static String bfunctionGen(int limit) {
+    public String bfunctionGen(int limit) {
         ArrayList<Character> list = new ArrayList<>();
         ArrayList<Character> list2 = new ArrayList<>();
 
@@ -103,7 +106,8 @@ public class Test {
                 list2.add((char)(65 + j));
             }
 
-            int max2 = random.nextInt(0,limit);
+            int max2 = (int)(limit*random.nextGaussian(0,0.20));
+            max2 = max2 < 0 ? -max2 : max2;
 
             for(int j = 0; j < max2; j++)
             {
@@ -124,10 +128,10 @@ public class Test {
         for (Character ch : list)
             builder.append(ch);
 
-        //return booleanSimplifing(builder.toString());
-        return "AB+AC+BC";
+        return booleanSimplifing(builder.toString());
+        //return "AB+AC+BC";
     }
-    public static String orderGen(int limit) {
+    public String orderGen(int limit) {
         ArrayList<Character> list = new ArrayList<>();
         StringBuilder builder = new StringBuilder();
 
@@ -140,10 +144,10 @@ public class Test {
         for (Character ch : list)
             builder.append(ch);
 
-        //return builder.toString();
-        return "ABC";
+        return builder.toString();
+        //return "ABC";
     }
-    public static String booleanSimplifing(String bfunction){
+    public String booleanSimplifing(String bfunction){
         ArrayList<String> functionList = new ArrayList<>(Arrays.asList(bfunction.split("[+]",0)));
 
         for(int i = 0; i < functionList.size(); i++){
