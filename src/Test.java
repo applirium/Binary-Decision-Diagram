@@ -1,59 +1,86 @@
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
 import java.util.*;
 
 public class Test {
+    static int limit = 4;
 
     public static void main(String[] args){
-        int limit = 2;
+
         Test test = new Test();
 
-        String order = test.orderGen(limit);
-        String bfunction = test.bfunctionGen(limit);
-        BDD robdd = test.create(bfunction,order);
+        BDD robdd = test.createWithBestOrder(test.bfunctionGen(limit));
 
-        System.out.println(1);
+        try {
+            test.printAll(robdd.getRoot());
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
+        for(int i = 0; i < 100; i++)
+        {
+            String input = test.inputGen(limit);
+            String out = robdd.use(input);
+            System.out.println(input+" "+out);
+        }
     }
-    public BDD create(String bfunction, String order)
-    {
+
+    void printAll(Node root) throws FileNotFoundException {
+        BinaryTreePrinter printer = new BinaryTreePrinter(root);
+        printer.print(new PrintStream("./data.txt"));
+    }
+
+    public BDD create(String bfunction, String order) {
         BDD root = new BDD(bfunction,order);
         HashMap<String,Node> hashTable = new HashMap<>();
 
         hashTable.put(root.getRoot().getBfuction(),root.getRoot());
         root.setRoot(nodeRecursion(root.getRoot(),order,0,hashTable));
         root.setNumberOfNodes(hashTable.size());
+        root.setOrder(order);
+
         return root;
     }
-    public Node nodeRecursion(Node root,String order,int i,HashMap<String,Node> hashTable){
+    private Node nodeRecursion(Node root,String order,int i,HashMap<String,Node> hashTable){
         Node newNode;
-        hashTable.putIfAbsent(root.getBfuction(),root);
 
-        if(root.getLeftchild() == null && !(root.getBfuction().equals("0") || root.getBfuction().equals("1")) && i < order.length())
+        if(root.getLeftchild() == null && i < order.length()  && !(root.getBfuction().equals("0") || root.getBfuction().equals("1")))
         {
-            newNode = new Node(booleanSimplifing(decomposition(root.getBfuction(),order.charAt(i),'N')));
+            while(!root.getBfuction().contains(String.valueOf(order.charAt(i))))
+                i++;
 
+            newNode = new Node(booleanSimplifing(decomposition(root.getBfuction(),order.charAt(i),'N')));
             hashTable.putIfAbsent(newNode.getBfuction(),newNode);
             root.setLeftchild(nodeRecursion(hashTable.get(newNode.getBfuction()),order,i+1,hashTable));
         }
 
-        if(root.getRightchild() == null && !(root.getBfuction().equals("0") || root.getBfuction().equals("1")) && i < order.length())
+        if(root.getRightchild() == null && i < order.length()  && !(root.getBfuction().equals("0") || root.getBfuction().equals("1")))
         {
-            newNode = new Node(booleanSimplifing(decomposition(root.getBfuction(),order.charAt(i),'P')));
+            while(!root.getBfuction().contains(String.valueOf(order.charAt(i))))
+                i++;
 
+            newNode = new Node(booleanSimplifing(decomposition(root.getBfuction(),order.charAt(i),'P')));
             hashTable.putIfAbsent(newNode.getBfuction(),newNode);
             root.setRightchild(nodeRecursion(hashTable.get(newNode.getBfuction()),order,i+1,hashTable));
         }
 
         return root;
     }
+    public BDD createWithBestOrder(String bfunction) {
+        BDD minimum = null, iteration = null;
 
-    public BDD createWithBestOrder(String bfunction)
-    {
-        return null;
+        for(int i = 0; i < limit; i++)
+        {
+            iteration = create(bfunction,orderGen(limit));
+
+            if(minimum == null || minimum.getNumberOfNodes() > iteration.getNumberOfNodes())
+            {
+                minimum = iteration;
+            }
+        }
+        return minimum;
     }
-    public char use(BDD bdd,String input)
-    {
-        return 0;
-    }
-    public String decomposition(String bfunction, char order,char choice) {
+    private String decomposition(String bfunction, char order,char choice) {
         ArrayList<String> functionList = new ArrayList<>(Arrays.asList(bfunction.split("[+]",0)));
         ArrayList<String> finalList = new ArrayList<>(functionList);
 
@@ -92,7 +119,7 @@ public class Test {
         }
         return booleanSimplifing(String.join("+",finalList));
     }
-    public String bfunctionGen(int limit) {
+    private String bfunctionGen(int limit) {
         ArrayList<Character> list = new ArrayList<>();
         ArrayList<Character> list2 = new ArrayList<>();
 
@@ -138,10 +165,9 @@ public class Test {
         for (Character ch : list)
             builder.append(ch);
 
-        //return booleanSimplifing(builder.toString());
-        return "!A+A";
+        return booleanSimplifing(builder.toString());
     }
-    public String orderGen(int limit) {
+    private String orderGen(int limit) {
         ArrayList<Character> list = new ArrayList<>();
         StringBuilder builder = new StringBuilder();
 
@@ -154,10 +180,27 @@ public class Test {
         for (Character ch : list)
             builder.append(ch);
 
-        //return builder.toString();
-        return "AB";
+        return builder.toString();
     }
-    public String booleanSimplifing(String bfunction){
+    private String inputGen(int limit) {
+        ArrayList<Character> list = new ArrayList<>();
+        StringBuilder builder = new StringBuilder();
+        Random random = new Random();
+
+        for(int i = 0; i < limit; i++)
+        {
+            if(random.nextBoolean())
+                list.add('1');
+            else
+                list.add('0');
+        }
+
+        for (Character ch : list)
+            builder.append(ch);
+
+        return builder.toString();
+    }
+    private String booleanSimplifing(String bfunction){
         ArrayList<String> functionList = new ArrayList<>(Arrays.asList(bfunction.split("[+]",0)));
 
         for(int i = 0; i < functionList.size(); i++){

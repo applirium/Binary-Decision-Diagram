@@ -2,7 +2,7 @@ public class Node {
 
     private Node leftchild;
     private Node rightchild;
-    private String bfuction;
+    private final String bfuction;
 
     Node(String bfuction)
     {
@@ -19,9 +19,6 @@ public class Node {
     }
     public String getBfuction() {
         return bfuction;
-    }
-    public void setBfuction(String bfuction) {
-        this.bfuction = bfuction;
     }
     public void setLeftchild(Node leftchild) {
         this.leftchild = leftchild;
