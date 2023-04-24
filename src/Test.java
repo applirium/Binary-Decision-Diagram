@@ -3,33 +3,88 @@ import java.io.PrintStream;
 import java.util.*;
 
 public class Test {
-    static int limit = 4;
+    private static int limit;
 
     public static void main(String[] args){
-
+        Scanner scanner = new Scanner(System.in);
         Test test = new Test();
+        String function;
 
-        BDD robdd = test.createWithBestOrder(test.bfunctionGen(limit));
-
-        try {
-            test.printAll(robdd.getRoot());
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-
-        for(int i = 0; i < 100; i++)
+        do
         {
-            String input = test.inputGen(limit);
-            String out = robdd.use(input);
-            System.out.println(input+" "+out);
+            System.out.println("\nIncrement = testing with repeated random order and function with increasing number of variables | best = create best order with comparison testing | same = testing with repeated random order and function | end = end of testing");
+            System.out.println("Best = create best order with comparison testing | same = testing with repeated random order and function | end = end of testing");
+            System.out.println("Same = testing with repeated random order and function | end = end of testing");
+            System.out.println("End = end of testing\n");
+
+            function = scanner.nextLine();
+            switch (function) {
+                case "increment" -> test.incrementTesting(scanner);
+                case "best" -> test.bestOrderTesting(scanner);
+                case "same" -> test.sameTesting(scanner);
+                case "end" -> {}
+                default -> System.out.println("Wrong input");
+            }
+
+        }
+        while(!function.equals("end"));
+
+    }
+
+    public void sameTesting(Scanner scanner){
+        System.out.println("Choose lenght of performing same testing");
+        int precission = Integer.parseInt(scanner.nextLine());
+
+        System.out.println("Choose number of variables");
+        setLimit(Integer.parseInt(scanner.nextLine()));
+        long startTime,endTime;
+        double reduction;
+
+        for(int i = 0; i < precission; i++)
+        {
+            startTime =  System.nanoTime();
+            BDD robdd = create(bfunctionGen(limit),orderGen(limit));
+            endTime = System.nanoTime();
+
+            reduction = 100 - (robdd.getNumberOfNodes() / (Math.pow(2,limit)-1));
+
+            System.out.println("Duration of 2^"+(limit+1)+"-1 original nodes, BDD reduced into "+robdd.getNumberOfNodes() + " unique nodes with approximately "+ reduction+" % reduction, duration of creating: "+ (double)(endTime-startTime)/1000000000+ " seconds.");
         }
     }
+    public void incrementTesting(Scanner scanner){
+        System.out.println("Choose maximum of varibles");
+        int maxVariable = Integer.parseInt(scanner.nextLine());
 
-    void printAll(Node root) throws FileNotFoundException {
-        BinaryTreePrinter printer = new BinaryTreePrinter(root);
-        printer.print(new PrintStream("./data.txt"));
+        long startTime,endTime;
+        double reduction;
+
+        for(int i = 1; i <= maxVariable; i++)
+        {
+            startTime =  System.nanoTime();
+            BDD robdd = create(bfunctionGen(i),orderGen(i));
+            endTime = System.nanoTime();
+
+            reduction = 100 - (robdd.getNumberOfNodes() / (Math.pow(2,i)-1));
+
+            System.out.println("Duration of 2^"+(i+1)+"-1 original nodes, BDD reduced into "+robdd.getNumberOfNodes() + " unique nodes with approximately "+ reduction+" % reduction, duration of creating: "+ (double)(endTime-startTime)/1000000000+ " seconds.");
+        }
     }
+    public void bestOrderTesting(Scanner scanner){
+        System.out.println("Choose number of variables");
+        setLimit(Integer.parseInt(scanner.nextLine()));
 
+        String bfunction = bfunctionGen(limit);
+        BDD optimalizedBDD = createWithBestOrder(bfunction);
+        BDD randomBDD = create(bfunction,orderGen(limit));
+
+        double reduction1 = 100 - (optimalizedBDD.getNumberOfNodes() / (Math.pow(2,limit)-1));
+        double reduction2 = 100 - (randomBDD.getNumberOfNodes() / (Math.pow(2,limit)-1));
+
+        System.out.println("Optimalized BDD has "+optimalizedBDD.getNumberOfNodes()+ " unique nodes with order "+optimalizedBDD.getOrder() +", "+reduction1+ " % reduction");
+        System.out.println("Random BDD has "+randomBDD.getNumberOfNodes() + " unique nodes with order "+randomBDD.getOrder() +", "+reduction2+" % reduction");
+        System.out.println((randomBDD.getNumberOfNodes() - optimalizedBDD.getNumberOfNodes()) +" unique node difference " +(reduction1 - reduction2) +" % reduction difference");
+
+    }
     public BDD create(String bfunction, String order) {
         BDD root = new BDD(bfunction,order);
         HashMap<String,Node> hashTable = new HashMap<>();
@@ -67,7 +122,7 @@ public class Test {
         return root;
     }
     public BDD createWithBestOrder(String bfunction) {
-        BDD minimum = null, iteration = null;
+        BDD minimum = null, iteration;
 
         for(int i = 0; i < limit; i++)
         {
@@ -127,9 +182,8 @@ public class Test {
         Random random = new Random();
 
         //int max = random.nextInt(1,(int)Math.pow(2,limit));
-        int max = limit;
 
-        for(int i = 0; i < max ; i++)
+        for(int i = 0; i < limit; i++)
         {
             if(i != 0)
             {
@@ -212,5 +266,8 @@ public class Test {
             }
         }
         return String.join("+",functionList);
+    }
+    private static void setLimit(int limit) {
+        Test.limit = limit;
     }
 }
