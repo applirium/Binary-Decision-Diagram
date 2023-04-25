@@ -1,5 +1,4 @@
-import java.io.FileNotFoundException;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.*;
 
 public class Test {
@@ -25,7 +24,6 @@ public class Test {
                 case "end" -> {}
                 default -> System.out.println("Wrong input");
             }
-
         }
         while(!function.equals("end"));
 
@@ -38,17 +36,27 @@ public class Test {
         System.out.println("Choose number of variables");
         setLimit(Integer.parseInt(scanner.nextLine()));
         long startTime,endTime;
-        double reduction;
+        double reduction,time;
 
-        for(int i = 0; i < precission; i++)
-        {
-            startTime =  System.nanoTime();
-            BDD robdd = create(bfunctionGen(limit),orderGen(limit));
-            endTime = System.nanoTime();
+        try {
+            FileWriter fileWriter = new FileWriter("results.txt");
+            fileWriter.write("Variables | Unique Nodes | Time\n");
+            for(int i = 0; i < precission; i++)
+            {
+                startTime =  System.nanoTime();
+                BDD robdd = create(bfunctionGen(limit),orderGen(limit));
+                endTime = System.nanoTime();
 
-            reduction = 100 - (robdd.getNumberOfNodes() / (Math.pow(2,limit)-1));
+                reduction = 100 - (robdd.getNumberOfNodes() / (Math.pow(2,limit)-1));
+                time = (double)(endTime-startTime)/1000000000;
 
-            System.out.println("Duration of 2^"+(limit+1)+"-1 original nodes, BDD reduced into "+robdd.getNumberOfNodes() + " unique nodes with approximately "+ reduction+" % reduction, duration of creating: "+ (double)(endTime-startTime)/1000000000+ " seconds.");
+                fileWriter.write(limit+" "+robdd.getNumberOfNodes()+" "+time+"\n");
+                System.out.println("Duration of 2^"+(limit+1)+"-1 original nodes, BDD reduced into "+robdd.getNumberOfNodes() + " unique nodes with approximately "+ reduction+" % reduction, duration of creating: "+ time + " seconds.");
+            }
+
+            fileWriter.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
     public void incrementTesting(Scanner scanner){
@@ -56,17 +64,28 @@ public class Test {
         int maxVariable = Integer.parseInt(scanner.nextLine());
 
         long startTime,endTime;
-        double reduction;
+        double reduction,time;
+        BDD robdd;
 
-        for(int i = 1; i <= maxVariable; i++)
-        {
-            startTime =  System.nanoTime();
-            BDD robdd = create(bfunctionGen(i),orderGen(i));
-            endTime = System.nanoTime();
+        try {
+            FileWriter fileWriter = new FileWriter("results.txt");
+            fileWriter.write("Variables | Unique Nodes | Time\n");
+            for(int i = 1; i <= maxVariable; i++)
+            {
+                startTime =  System.nanoTime();
+                robdd = create(bfunctionGen(i),orderGen(i));
+                endTime = System.nanoTime();
 
-            reduction = 100 - (robdd.getNumberOfNodes() / (Math.pow(2,i)-1));
+                reduction = 100 - (robdd.getNumberOfNodes() / (Math.pow(2,i)-1));
+                time = (double)(endTime-startTime)/1000000000;
 
-            System.out.println("Duration of 2^"+(i+1)+"-1 original nodes, BDD reduced into "+robdd.getNumberOfNodes() + " unique nodes with approximately "+ reduction+" % reduction, duration of creating: "+ (double)(endTime-startTime)/1000000000+ " seconds.");
+                fileWriter.write(i+" "+robdd.getNumberOfNodes()+" "+time+"\n");
+                System.out.println("Duration of 2^"+(i+1)+"-1 original nodes, BDD reduced into "+robdd.getNumberOfNodes() + " unique nodes with approximately "+ reduction+" % reduction, duration of creating: "+ time + " seconds.");
+            }
+
+            fileWriter.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
     public void bestOrderTesting(Scanner scanner){

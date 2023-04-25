@@ -2,7 +2,6 @@ public class BDD {
     private Node root;
     private int numberOfNodes;
     private String order;
-
     BDD(String bfunction,String order) {
         this.numberOfNodes = 1;
         this.order = order;
@@ -15,9 +14,7 @@ public class BDD {
         for(String decision: input.split(""))
         {
             if((!decision.equals("0") && !decision.equals("1")) || input.length() > this.order.length())
-            {
                 return "-1";
-            }
         }
 
         while(!node.getBfuction().equals("0") && !node.getBfuction().equals("1"))

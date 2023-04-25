@@ -1,16 +1,12 @@
 public class Node {
-
     private Node leftchild;
     private Node rightchild;
     private final String bfuction;
-
-    Node(String bfuction)
-    {
+    Node(String bfuction) {
         this.bfuction = bfuction;
         this.leftchild = null;
         this.rightchild = null;
     }
-
     public Node getLeftchild() {
         return leftchild;
     }
