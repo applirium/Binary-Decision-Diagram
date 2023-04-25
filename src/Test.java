@@ -1,9 +1,7 @@
-import java.io.*;
 import java.util.*;
 
 public class Test {
     private static int limit;
-
     public static void main(String[] args){
         Scanner scanner = new Scanner(System.in);
         Test test = new Test();
@@ -11,13 +9,13 @@ public class Test {
 
         do
         {
-            System.out.println("\nIncrement = testing with repeated random order and function with increasing number of variables | best = create best order with comparison testing | same = testing with repeated random order and function | end = end of testing");
+            System.out.println("\nIncrement = testing with repeated random order and function with increasing number of variables");
             System.out.println("Best = create best order with comparison testing | same = testing with repeated random order and function | end = end of testing");
             System.out.println("Same = testing with repeated random order and function | end = end of testing");
             System.out.println("End = end of testing\n");
 
             function = scanner.nextLine();
-            switch (function) {
+            switch (function.toLowerCase()) {
                 case "increment" -> test.incrementTesting(scanner);
                 case "best" -> test.bestOrderTesting(scanner);
                 case "same" -> test.sameTesting(scanner);
@@ -26,67 +24,51 @@ public class Test {
             }
         }
         while(!function.equals("end"));
-
     }
+    private BDD generatingData(int limit) {
+        long startTime,endTime;
+        double reduction,time;
+        BDD robdd;
 
-    public void sameTesting(Scanner scanner){
+        startTime =  System.nanoTime();
+        robdd = create(bfunctionGen(limit),orderGen(limit));
+        endTime = System.nanoTime();
+
+        reduction = 100 - (robdd.getNumberOfNodes() / (Math.pow(2, limit)-1));
+        time = (double)(endTime-startTime)/1000000000;
+
+        System.out.println("Duration of 2^"+(limit +1)+"-1 original nodes, BDD reduced into "+robdd.getNumberOfNodes() + " unique nodes with approximately "+ reduction+" % reduction, duration of creating: "+ time + " seconds.");
+        return robdd;
+    }
+    public void sameTesting(Scanner scanner) {
         System.out.println("Choose lenght of performing same testing");
         int precission = Integer.parseInt(scanner.nextLine());
 
         System.out.println("Choose number of variables");
         setLimit(Integer.parseInt(scanner.nextLine()));
-        long startTime,endTime;
-        double reduction,time;
+        BDD robdd = null;
 
-        try {
-            FileWriter fileWriter = new FileWriter("results.txt");
-            fileWriter.write("Variables | Unique Nodes | Time\n");
-            for(int i = 0; i < precission; i++)
-            {
-                startTime =  System.nanoTime();
-                BDD robdd = create(bfunctionGen(limit),orderGen(limit));
-                endTime = System.nanoTime();
-
-                reduction = 100 - (robdd.getNumberOfNodes() / (Math.pow(2,limit)-1));
-                time = (double)(endTime-startTime)/1000000000;
-
-                fileWriter.write(limit+" "+robdd.getNumberOfNodes()+" "+time+"\n");
-                System.out.println("Duration of 2^"+(limit+1)+"-1 original nodes, BDD reduced into "+robdd.getNumberOfNodes() + " unique nodes with approximately "+ reduction+" % reduction, duration of creating: "+ time + " seconds.");
-            }
-
-            fileWriter.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        for(int i = 0; i < precission; i++)
+        {
+            robdd = generatingData(limit);
         }
+
+        assert robdd != null;
+        useTesting(scanner,robdd);
     }
     public void incrementTesting(Scanner scanner){
         System.out.println("Choose maximum of varibles");
         int maxVariable = Integer.parseInt(scanner.nextLine());
+        BDD robdd = null;
 
-        long startTime,endTime;
-        double reduction,time;
-        BDD robdd;
-
-        try {
-            FileWriter fileWriter = new FileWriter("results.txt");
-            fileWriter.write("Variables | Unique Nodes | Time\n");
-            for(int i = 1; i <= maxVariable; i++)
-            {
-                startTime =  System.nanoTime();
-                robdd = create(bfunctionGen(i),orderGen(i));
-                endTime = System.nanoTime();
-
-                reduction = 100 - (robdd.getNumberOfNodes() / (Math.pow(2,i)-1));
-                time = (double)(endTime-startTime)/1000000000;
-
-                fileWriter.write(i+" "+robdd.getNumberOfNodes()+" "+time+"\n");
-                System.out.println("Duration of 2^"+(i+1)+"-1 original nodes, BDD reduced into "+robdd.getNumberOfNodes() + " unique nodes with approximately "+ reduction+" % reduction, duration of creating: "+ time + " seconds.");
-            }
-
-            fileWriter.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        for(int i = 1; i <= maxVariable; i++)
+        {
+            robdd = generatingData(i);
+            setLimit(i);
         }
+
+        assert robdd != null;
+        useTesting(scanner,robdd);
     }
     public void bestOrderTesting(Scanner scanner){
         System.out.println("Choose number of variables");
@@ -103,6 +85,81 @@ public class Test {
         System.out.println("Random BDD has "+randomBDD.getNumberOfNodes() + " unique nodes with order "+randomBDD.getOrder() +", "+reduction2+" % reduction");
         System.out.println((randomBDD.getNumberOfNodes() - optimalizedBDD.getNumberOfNodes()) +" unique node difference " +(reduction1 - reduction2) +" % reduction difference");
 
+    }
+    public void useTesting(Scanner scanner,BDD robdd) {
+        System.out.println("Would you like to test use on your last BDD?");
+        String decission, order = robdd.getOrder();
+
+        do {
+            decission = scanner.nextLine();
+            switch (decission.toLowerCase()) {
+                case "yes" -> {
+                    String input,BDDoutput,expressionOutput;
+                    int failed = 0;
+
+                    System.out.println("Order: "+order);
+                    for(int i = 0; i < Math.pow(2,limit);i++)
+                    {
+                        input = inputGen(i);
+                        BDDoutput = robdd.use(input);
+                        expressionOutput  = finalExpression(input,robdd);
+
+                        System.out.print("Input " + input + " expected: " + expressionOutput +" BDD result: "+BDDoutput);
+                        if(BDDoutput.equals(expressionOutput))
+                            System.out.println(" ✅");
+                        else
+                        {
+                            System.out.println(" ❌");
+                            failed ++;
+                        }
+                    }
+                    System.out.println("Succesfull: "+(long)(Math.pow(2,limit)-failed)+" Failed: "+failed);
+                }
+                case "no" -> {}
+                default -> System.out.println("Would you like to use your last BDD?");
+            }
+        }
+        while(!decission.equals("no") && !decission.equals("yes"));
+    }
+    public String finalExpression(String input,BDD robdd) {
+        String temp = robdd.getRoot().getBfuction();
+        String[] splitedTemp = temp.split("[+]",0);
+        boolean zero = false;
+
+        for(String term: splitedTemp)
+        {
+            for(int i = 0; i < term.length(); i++)
+            {
+                zero = false;
+                if(i == 0)
+                {
+                    if(term.charAt(i) != '!' && input.charAt(robdd.getOrder().indexOf(String.valueOf(term.charAt(i)))) == '0')
+                    {
+                        zero = true;
+                        break;
+                    }
+                }
+                else if(term.charAt(i-1) == '!')
+                {
+                    if(input.charAt(robdd.getOrder().indexOf(String.valueOf(term.charAt(i)))) == '1')
+                    {
+                        zero = true;
+                        break;
+                    }
+                }
+                else if(term.charAt(i) != '!')
+                {
+                    if(input.charAt(robdd.getOrder().indexOf(String.valueOf(term.charAt(i)))) == '0')
+                    {
+                        zero = true;
+                        break;
+                    }
+                }
+            }
+            if(!zero)
+                return "1";
+        }
+        return "0";
     }
     public BDD create(String bfunction, String order) {
         BDD root = new BDD(bfunction,order);
@@ -255,23 +312,14 @@ public class Test {
 
         return builder.toString();
     }
-    private String inputGen(int limit) {
-        ArrayList<Character> list = new ArrayList<>();
-        StringBuilder builder = new StringBuilder();
-        Random random = new Random();
-
-        for(int i = 0; i < limit; i++)
+    private String inputGen(int number) {
+        String result = Integer.toBinaryString(number);
+        if(result.length() < limit)
         {
-            if(random.nextBoolean())
-                list.add('1');
-            else
-                list.add('0');
+            result = "0".repeat(limit - result.length()) + result;
         }
 
-        for (Character ch : list)
-            builder.append(ch);
-
-        return builder.toString();
+        return result;
     }
     private String booleanSimplifing(String bfunction){
         ArrayList<String> functionList = new ArrayList<>(Arrays.asList(bfunction.split("[+]",0)));

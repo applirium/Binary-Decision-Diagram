@@ -19,21 +19,26 @@ public class BDD {
 
         while(!node.getBfuction().equals("0") && !node.getBfuction().equals("1"))
         {
-            if(input.charAt(i) == '0')
-            {
+            try{
+
                 while(!node.getBfuction().contains(String.valueOf(this.order.charAt(i))))
                     i++;
 
-                node = node.getLeftchild();
+                if(input.charAt(i) == '0')
+                {
+                    node = node.getLeftchild();
+                }
+                else
+                {
+                    node = node.getRightchild();
+                }
+                i++;
             }
-            else
+            catch (StringIndexOutOfBoundsException e)
             {
-                while(!node.getBfuction().contains(String.valueOf(this.order.charAt(i))))
-                    i++;
-
-                node = node.getRightchild();
+                return "-1";
             }
-            i++;
+
         }
         return node.getBfuction();
     }
