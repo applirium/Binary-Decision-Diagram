@@ -10,9 +10,9 @@ public class Test {
         do
         {
             System.out.println("\nIncrement = testing with repeated random order and function with increasing number of variables");
-            System.out.println("Best = create best order with comparison testing | same = testing with repeated random order and function | end = end of testing");
-            System.out.println("Same = testing with repeated random order and function | end = end of testing");
-            System.out.println("End = end of testing\n");
+            System.out.println("Best = create best order with comparison testing");
+            System.out.println("Same = testing with repeated random order and function");
+            System.out.print("End = end of testing -> ");
 
             function = scanner.nextLine();
             switch (function.toLowerCase()) {
@@ -41,10 +41,10 @@ public class Test {
         return robdd;
     }
     public void sameTesting(Scanner scanner) {
-        System.out.println("Choose lenght of performing same testing");
+        System.out.print("\nChoose lenght of performing same testing -> ");
         int precission = Integer.parseInt(scanner.nextLine());
 
-        System.out.println("Choose number of variables");
+        System.out.print("\nChoose number of variables -> ");
         setLimit(Integer.parseInt(scanner.nextLine()));
         BDD robdd = null;
 
@@ -57,7 +57,7 @@ public class Test {
         useTesting(scanner,robdd);
     }
     public void incrementTesting(Scanner scanner){
-        System.out.println("Choose maximum of varibles");
+        System.out.print("\nChoose maximum of varibles -> ");
         int maxVariable = Integer.parseInt(scanner.nextLine());
         BDD robdd = null;
 
@@ -71,7 +71,7 @@ public class Test {
         useTesting(scanner,robdd);
     }
     public void bestOrderTesting(Scanner scanner){
-        System.out.println("Choose number of variables");
+        System.out.print("Choose number of variables -> ");
         setLimit(Integer.parseInt(scanner.nextLine()));
 
         String bfunction = bfunctionGen(limit);
@@ -81,13 +81,13 @@ public class Test {
         double reduction1 = 100 - (optimalizedBDD.getNumberOfNodes() / (Math.pow(2,limit)-1));
         double reduction2 = 100 - (randomBDD.getNumberOfNodes() / (Math.pow(2,limit)-1));
 
-        System.out.println("Optimalized BDD has "+optimalizedBDD.getNumberOfNodes()+ " unique nodes with order "+optimalizedBDD.getOrder() +", "+reduction1+ " % reduction");
+        System.out.println("\nOptimalized BDD has "+optimalizedBDD.getNumberOfNodes()+ " unique nodes with order "+optimalizedBDD.getOrder() +", "+reduction1+ " % reduction");
         System.out.println("Random BDD has "+randomBDD.getNumberOfNodes() + " unique nodes with order "+randomBDD.getOrder() +", "+reduction2+" % reduction");
         System.out.println((randomBDD.getNumberOfNodes() - optimalizedBDD.getNumberOfNodes()) +" unique node difference " +(reduction1 - reduction2) +" % reduction difference");
 
     }
     public void useTesting(Scanner scanner,BDD robdd) {
-        System.out.println("Would you like to test use on your last BDD?");
+        System.out.print("\nWould you like to test use on your last BDD? -> ");
         String decission, order = robdd.getOrder();
 
         do {
@@ -116,7 +116,7 @@ public class Test {
                     System.out.println("Succesfull: "+(long)(Math.pow(2,limit)-failed)+" Failed: "+failed);
                 }
                 case "no" -> {}
-                default -> System.out.println("Would you like to use your last BDD?");
+                default -> System.out.print("\nWould you like to test use on your last BDD? -> ");
             }
         }
         while(!decission.equals("no") && !decission.equals("yes"));
@@ -162,15 +162,30 @@ public class Test {
         return "0";
     }
     public BDD create(String bfunction, String order) {
-        BDD root = new BDD(bfunction,order);
+        BDD bdd = new BDD(bfunction,order);
         HashMap<String,Node> hashTable = new HashMap<>();
 
-        hashTable.put(root.getRoot().getBfuction(),root.getRoot());
-        root.setRoot(nodeRecursion(root.getRoot(),order,0,hashTable));
-        root.setNumberOfNodes(hashTable.size());
-        root.setOrder(order);
+        hashTable.put(bdd.getRoot().getBfuction(),bdd.getRoot());
+        bdd.setRoot(nodeRecursion(bdd.getRoot(),order,0,hashTable));
 
-        return root;
+        hashTable.clear();
+        hashTable.put(bdd.getRoot().getBfuction(),bdd.getRoot());
+
+        nodeCounting(bdd.getRoot(),hashTable);
+        bdd.setNumberOfNodes(hashTable.size());
+        bdd.setOrder(order);
+
+        return bdd;
+    }
+    private void nodeCounting(Node root,HashMap<String,Node> hashTable) {
+        if(root == null)
+        {
+            return;
+        }
+        nodeCounting(root.getLeftchild(),hashTable);
+        hashTable.putIfAbsent(root.getBfuction(),root);
+        nodeCounting(root.getRightchild(),hashTable);
+
     }
     private Node nodeRecursion(Node root,String order,int i,HashMap<String,Node> hashTable){
         Node newNode;
@@ -193,6 +208,11 @@ public class Test {
             newNode = new Node(booleanSimplifing(decomposition(root.getBfuction(),order.charAt(i),'P')));
             hashTable.putIfAbsent(newNode.getBfuction(),newNode);
             root.setRightchild(nodeRecursion(hashTable.get(newNode.getBfuction()),order,i+1,hashTable));
+        }
+
+        if(root.getRightchild() == root.getLeftchild() && root.getRightchild() != null && root.getLeftchild() != null)
+        {
+            root = root.getRightchild();
         }
 
         return root;
