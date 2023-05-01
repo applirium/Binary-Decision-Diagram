@@ -92,6 +92,7 @@ public class Test {
         System.out.println("\nOptimalized BDD has "+optimalizedBDD.getNumberOfNodes()+ " unique nodes with order "+optimalizedBDD.getOrder() +", "+reduction1+ " % reduction");
         System.out.println("Random BDD has "+randomBDD.getNumberOfNodes() + " unique nodes with order "+randomBDD.getOrder() +", "+reduction2+" % reduction");
         System.out.println((randomBDD.getNumberOfNodes() - optimalizedBDD.getNumberOfNodes()) +" unique node difference " +(reduction1 - reduction2) +" % reduction difference");
+        useTesting(scanner,optimalizedBDD);
 
     }
     public void useTesting(Scanner scanner,BDD robdd) {
