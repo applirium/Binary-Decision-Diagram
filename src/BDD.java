@@ -2,8 +2,10 @@ public class BDD {
     private Node root;
     private int numberOfNodes;
     private String order;
+    private double time;
     BDD(String bfunction,String order) {
         this.numberOfNodes = 1;
+        this.time = 0;
         this.order = order;
         this.root = new Node(bfunction);
     }
@@ -59,5 +61,11 @@ public class BDD {
     }
     public void setOrder(String order) {
         this.order = order;
+    }
+    public double getTime() {
+        return time;
+    }
+    public void setTime(double time) {
+        this.time = time;
     }
 }

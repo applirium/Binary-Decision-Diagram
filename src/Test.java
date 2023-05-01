@@ -27,7 +27,7 @@ public class Test {
     }
     private BDD generatingData(int limit) {
         long startTime,endTime;
-        double reduction,time;
+        double reduction;
         BDD robdd;
 
         startTime =  System.nanoTime();
@@ -35,14 +35,16 @@ public class Test {
         endTime = System.nanoTime();
 
         reduction = 100 - (robdd.getNumberOfNodes() / (Math.pow(2, limit)-1));
-        time = (double)(endTime-startTime)/1000000000;
+        robdd.setTime((double)(endTime-startTime)/1000000000);
 
-        System.out.println("Duration of 2^"+(limit +1)+"-1 original nodes, BDD reduced into "+robdd.getNumberOfNodes() + " unique nodes with approximately "+ reduction+" % reduction, duration of creating: "+ time + " seconds.");
+        System.out.println("Duration of 2^"+(limit +1)+"-1 original nodes, BDD reduced into "+robdd.getNumberOfNodes() + " unique nodes with approximately "+ reduction+" % reduction, duration of creating: "+ robdd.getTime() + " seconds.");
         return robdd;
     }
     public void sameTesting(Scanner scanner) {
         System.out.print("\nChoose lenght of performing same testing -> ");
         int precission = Integer.parseInt(scanner.nextLine());
+        double time = 0;
+        int nodes = 0;
 
         System.out.print("\nChoose number of variables -> ");
         setLimit(Integer.parseInt(scanner.nextLine()));
@@ -51,8 +53,10 @@ public class Test {
         for(int i = 0; i < precission; i++)
         {
             robdd = generatingData(limit);
+            time += robdd.getTime();
+            nodes += robdd.getNumberOfNodes();
         }
-
+        System.out.println("Avarage nodes: "+nodes/limit +" Avarage time: "+time/limit);
         assert robdd != null;
         useTesting(scanner,robdd);
     }
@@ -60,13 +64,17 @@ public class Test {
         System.out.print("\nChoose maximum of varibles -> ");
         int maxVariable = Integer.parseInt(scanner.nextLine());
         BDD robdd = null;
+        double time = 0;
+        int nodes = 0;
 
         for(int i = 1; i <= maxVariable; i++)
         {
             robdd = generatingData(i);
             setLimit(i);
+            time += robdd.getTime();
+            nodes += robdd.getNumberOfNodes();
         }
-
+        System.out.println("Avarage nodes: "+nodes/maxVariable +" Avarage time: "+time/maxVariable);
         assert robdd != null;
         useTesting(scanner,robdd);
     }
@@ -162,6 +170,7 @@ public class Test {
         return "0";
     }
     public BDD create(String bfunction, String order) {
+
         BDD bdd = new BDD(bfunction,order);
         HashMap<String,Node> hashTable = new HashMap<>();
 
@@ -214,7 +223,6 @@ public class Test {
         {
             root = root.getRightchild();
         }
-
         return root;
     }
     public BDD createWithBestOrder(String bfunction) {
@@ -332,13 +340,12 @@ public class Test {
 
         return builder.toString();
     }
-    private String inputGen(int number) {
+    private String inputGen(int number)     {
         String result = Integer.toBinaryString(number);
         if(result.length() < limit)
         {
             result = "0".repeat(limit - result.length()) + result;
         }
-
         return result;
     }
     private String booleanSimplifing(String bfunction){
