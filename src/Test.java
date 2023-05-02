@@ -34,7 +34,7 @@ public class Test {
         robdd = create(bfunctionGen(limit),orderGen(limit));
         endTime = System.nanoTime();
 
-        reduction = 100 - (robdd.getNumberOfNodes() / (Math.pow(2, limit)-1));
+        reduction = 100 - robdd.getNumberOfNodes()*100 / (Math.pow(2, limit+1)-1);
         robdd.setTime((double)(endTime-startTime)/1000000000);
 
         System.out.println("Duration of 2^"+(limit +1)+"-1 original nodes, BDD reduced into "+robdd.getNumberOfNodes() + " unique nodes with approximately "+ reduction+" % reduction, duration of creating: "+ robdd.getTime() + " seconds.");
